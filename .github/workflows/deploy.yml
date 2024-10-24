@@ -41,5 +41,5 @@ jobs:
         env:
           HUGGINGFACE_API_TOKEN: ${{ secrets.HUGGINGFACE_API_KEY }}
         run: |
-          git remote set-url origin https://huggingface.co/spaces/drogba771/command
+          git remote set-url origin https://huggingface.co/spaces/drogba771/command.git
           git push origin main

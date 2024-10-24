@@ -15,14 +15,22 @@ if not api_key:
 interpreter.llm.api_key = api_key
 interpreter.llm.model = "meta-llama/Llama-3.1-8B-Instruct"  # Example model
 
-# Function to execute tasks using OpenInterpreter
+# Function to execute shell commands if detected in model output
+def execute_shell_command(command):
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    return result.stdout if result.returncode == 0 else result.stderr
+
+# Function to process tasks using OpenInterpreter and detect shell commands
 def execute_task(task):
-    if task.startswith("run shell"):
-        command = task.replace("run shell", "").strip()
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        return result.stdout if result.returncode == 0 else result.stderr
+    # Get the model-generated response first
+    response = interpreter.chat(task)
+    
+    # Check if the response indicates a shell command
+    if "run shell" in response.lower():
+        command = response.split("run shell", 1)[1].strip()
+        return execute_shell_command(command)
     else:
-        return interpreter.chat(task)
+        return response
 
 # CLI interface using argparse
 def cli_interface():

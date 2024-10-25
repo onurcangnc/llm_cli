@@ -12,9 +12,10 @@ api_key = os.getenv("HUGGINGFACE_API_KEY")
 if not api_key:
     raise ValueError("API key not found. Set the HUGGINGFACE_API_KEY environment variable.")
 
-# Set the API key for the interpreter
+# Set the API key and model for the interpreter
 interpreter.llm.api_key = api_key
-interpreter.llm.model = "meta-llama/Llama-3.1-8B-Instruct"  # Example model
+interpreter.llm.provider = "huggingface"  # Specify the provider
+interpreter.llm.model = "meta-llama/Llama-3.1-8B-Instruct"  # Use the correct model identifier
 
 # Function to execute shell commands if detected in model output
 def execute_shell_command(command):
@@ -27,7 +28,7 @@ def execute_shell_command(command):
 def execute_task(task):
     try:
         # Get the model-generated response first
-        response = interpreter.chat(task)
+        response = "".join([chunk for chunk in interpreter.chat(task, stream=True)])
     except Exception as e:
         return f"Error while interacting with the model: {str(e)}"
     

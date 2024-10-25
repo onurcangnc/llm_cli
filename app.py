@@ -42,11 +42,14 @@ def execute_task(task):
 # CLI interface using argparse
 def cli_interface():
     parser = argparse.ArgumentParser(description="Command-line interaction with OpenInterpreter.")
-    parser.add_argument("--task", type=str, required=True, help="The task or command to execute")
+    parser.add_argument("--task", type=str, help="The task or command to execute")
     args = parser.parse_args()
 
+    # Provide a default task if none is provided
+    task = args.task if args.task else "Tell me a joke"
+
     # Execute the task and print the result
-    result = execute_task(args.task)
+    result = execute_task(task)
     print(result)
 
 # Main entry point for the script

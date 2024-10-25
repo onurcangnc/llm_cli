@@ -15,7 +15,11 @@ if not api_key:
 # Set the API key and model for the interpreter
 interpreter.llm.api_key = api_key
 interpreter.llm.provider = "huggingface"  # Specify the provider
-interpreter.llm.model = "huggingface/gpt2"  # Use the correct model identifier
+interpreter.llm.model = "huggingface/gpt2"  # Use an existing Hugging Face model identifier
+
+# Set context window and max tokens for the model
+interpreter.context_window = 8000
+interpreter.max_tokens = 1000
 
 # Function to execute shell commands if detected in model output
 def execute_shell_command(command):
@@ -28,7 +32,7 @@ def execute_shell_command(command):
 def execute_task(task):
     try:
         # Get the model-generated response first
-        response = "".join([chunk for chunk in interpreter.chat(task, stream=True)])
+        response = "".join([chunk if isinstance(chunk, str) else str(chunk) for chunk in interpreter.chat(task, stream=True)])
     except Exception as e:
         return f"Error while interacting with the model: {str(e)}"
     

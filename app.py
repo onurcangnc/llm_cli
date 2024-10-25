@@ -4,6 +4,7 @@ from interpreter import interpreter
 import argparse
 import subprocess
 import sys
+import shlex
 
 # Fetch the Hugging Face API key from environment variables
 api_key = os.getenv("HUGGINGFACE_API_KEY")
@@ -17,13 +18,18 @@ interpreter.llm.model = "meta-llama/Llama-3.1-8B-Instruct"  # Example model
 
 # Function to execute shell commands if detected in model output
 def execute_shell_command(command):
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    # Sanitize user input using shlex.split to avoid security vulnerabilities
+    sanitized_command = shlex.split(command)
+    result = subprocess.run(sanitized_command, capture_output=True, text=True)
     return result.stdout if result.returncode == 0 else result.stderr
 
 # Function to process tasks using OpenInterpreter and detect shell commands
 def execute_task(task):
-    # Get the model-generated response first
-    response = interpreter.chat(task)
+    try:
+        # Get the model-generated response first
+        response = interpreter.chat(task)
+    except Exception as e:
+        return f"Error while interacting with the model: {str(e)}"
     
     # Check if the response indicates a shell command
     if "run shell" in response.lower():
@@ -42,16 +48,7 @@ def cli_interface():
     result = execute_task(args.task)
     print(result)
 
-# Gradio interface for the web app
-def run_gradio_interface():
-    iface = gr.Interface(fn=execute_task, inputs="text", outputs="text")
-    iface.launch()
-
 # Main entry point for the script
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        # Run the CLI if arguments are provided
-        cli_interface()
-    else:
-        # Run the Gradio web app by default
-        run_gradio_interface()
+    # Run the CLI interface only, no web app
+    cli_interface()

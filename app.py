@@ -15,7 +15,7 @@ if not api_key:
 # Set the API key and model for the interpreter
 interpreter.llm.api_key = api_key
 interpreter.llm.provider = "huggingface"  # Specify the provider
-interpreter.llm.model = "meta-llama/Llama-3.1-8B-Instruct"  # Use the correct model identifier
+interpreter.llm.model = "huggingface/gpt2"  # Use the correct model identifier
 
 # Function to execute shell commands if detected in model output
 def execute_shell_command(command):

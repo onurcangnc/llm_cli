@@ -1,62 +1,33 @@
-import os
-import gradio as gr
-from interpreter import interpreter
 import argparse
-import subprocess
-import sys
-import shlex
+import gradio as gr
+import torch
+from transformers import pipeline
 
-# Fetch the Hugging Face API key from environment variables
-api_key = os.getenv("HUGGINGFACE_API_KEY")
+# Load the model
+generator = pipeline("text-generation", model="gpt-neo-2.7B")
 
-if not api_key:
-    raise ValueError("API key not found. Set the HUGGINGFACE_API_KEY environment variable.")
-
-# Set the API key and model for the interpreter
-interpreter.llm.api_key = api_key
-interpreter.llm.provider = "huggingface"  # Specify the provider
-interpreter.llm.model = "huggingface/gpt2"  # Use an existing Hugging Face model identifier
-
-# Set context window and max tokens for the model
-interpreter.context_window = 8000
-interpreter.max_tokens = 1000
-
-# Function to execute shell commands if detected in model output
-def execute_shell_command(command):
-    # Sanitize user input using shlex.split to avoid security vulnerabilities
-    sanitized_command = shlex.split(command)
-    result = subprocess.run(sanitized_command, capture_output=True, text=True)
-    return result.stdout if result.returncode == 0 else result.stderr
-
-# Function to process tasks using OpenInterpreter and detect shell commands
-def execute_task(task):
-    try:
-        # Get the model-generated response first
-        response = "".join([chunk if isinstance(chunk, str) else str(chunk) for chunk in interpreter.chat(task, stream=True)])
-    except Exception as e:
-        return f"Error while interacting with the model: {str(e)}"
-    
-    # Check if the response indicates a shell command
-    if "run shell" in response.lower():
-        command = response.split("run shell", 1)[1].strip()
-        return execute_shell_command(command)
-    else:
-        return response
+# Define a function to handle input and generate text
+def generate_text(prompt):
+    return generator(prompt, max_length=100, do_sample=True)[0]["generated_text"]
 
 # CLI interface using argparse
 def cli_interface():
-    parser = argparse.ArgumentParser(description="Command-line interaction with OpenInterpreter.")
-    parser.add_argument("--task", type=str, help="The task or command to execute")
+    parser = argparse.ArgumentParser(description="Command-line interaction with the text generation model.")
+    parser.add_argument("--task", type=str, help="The prompt or command to generate text for")
     args = parser.parse_args()
 
     # Provide a default task if none is provided
     task = args.task if args.task else "Tell me a joke"
 
-    # Execute the task and print the result
-    result = execute_task(task)
+    # Generate and print the result
+    result = generate_text(task)
     print(result)
 
-# Main entry point for the script
 if __name__ == "__main__":
-    # Run the CLI interface only, no web app
     cli_interface()
+
+# Set up Gradio interface
+interface = gr.Interface(fn=generate_text, inputs="text", outputs="text")
+
+# Launch the app
+interface.launch()
